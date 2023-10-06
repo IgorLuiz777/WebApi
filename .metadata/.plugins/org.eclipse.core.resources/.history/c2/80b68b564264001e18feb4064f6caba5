@@ -1,0 +1,191 @@
+package br.com.fiap.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import br.com.fiap.entity.Contato;
+import br.com.fiap.enums.TipoContatoEnum;
+
+public class ContatoDao {
+	
+	private Connection conexao;
+
+	public void inserir(Contato contato)  {
+
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("insert into contato (id_contato,nome_contato, celular_contato, email_contato, tipo) values(?,?,?,?,?)");
+			comandoSQL.setInt(1, contato.getId());
+			comandoSQL.setString(2, contato.getNome());
+			comandoSQL.setString(3, contato.getCelular());
+			comandoSQL.setString(4, contato.getEmail());
+			comandoSQL.setString(5, contato.getTipo().toString());
+
+			comandoSQL.executeUpdate();
+			conexao.close();
+			comandoSQL.close();
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+	}
+
+	public void alterar(Contato contato) {
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("update contato set nome_contato = ?, celular_contato=?, email_contato = ?, tipo=? where id_contato = ?");
+			comandoSQL.setString(1, contato.getNome());
+			comandoSQL.setString(2, contato.getCelular());
+			comandoSQL.setString(3, contato.getEmail());
+			comandoSQL.setString(4, contato.getTipo().toString());
+			comandoSQL.setInt(5, contato.getId());
+
+			comandoSQL.executeUpdate();
+			conexao.close();
+			comandoSQL.close();
+
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void remover(int id) {
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("delete from contato where id_contato = ?");
+			comandoSQL.setInt(1, id);
+			comandoSQL.executeUpdate();
+			conexao.close();
+			comandoSQL.close();		
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public Contato buscarPorId(int id){
+		Contato c = new Contato();
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("select * from contato where  id_contato = ?");
+			comandoSQL.setInt(1, id);
+			ResultSet rs =  comandoSQL.executeQuery();
+			if (rs.next())
+			{
+				c.setId(rs.getInt(1));
+				c.setNome(rs.getString(2));
+				c.setCelular(rs.getString(3));
+				c.setEmail(rs.getString(4));
+				String tipo =(rs.getString(5).toString());
+				if (tipo.equals("FAMILIA"))
+					c.setTipo(TipoContatoEnum.FAMILIA);
+				else if (tipo.equals("AMIGOS"))
+					c.setTipo(TipoContatoEnum.AMIGOS);
+				else if (tipo.equals("TRABALHO"))
+					c.setTipo(TipoContatoEnum.TRABALHO);
+				else if (tipo.equals("COMERCIAL"))
+					c.setTipo(TipoContatoEnum.COMERCIAL);
+				else 
+					c.setTipo(TipoContatoEnum.COLEGA);
+
+			}
+			conexao.close();
+			comandoSQL.close();
+
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return c;
+	}
+
+
+	public ArrayList<Contato> buscarTodosContatos(){
+
+		ArrayList<Contato> listaContatos = new ArrayList<Contato>();
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("select * from contato order by nome_contato");
+			ResultSet rs =  comandoSQL.executeQuery();
+			while (rs.next())
+			{
+				Contato c = new Contato();
+				c.setId(rs.getInt(1));
+				c.setNome(rs.getString(2));
+				c.setCelular(rs.getString(3));
+				c.setEmail(rs.getString(4));
+				String tipo =(rs.getString(5));
+				if (tipo.equals("FAMILIA"))
+					c.setTipo(TipoContatoEnum.FAMILIA);
+				else if (tipo.equals("AMIGOS"))
+					c.setTipo(TipoContatoEnum.AMIGOS);
+				else if (tipo.equals("TRABALHO"))
+					c.setTipo(TipoContatoEnum.TRABALHO);
+				else if (tipo.equals("COMERCIAL"))
+					c.setTipo(TipoContatoEnum.COMERCIAL);
+				else 
+					c.setTipo(TipoContatoEnum.COLEGA);
+				listaContatos.add(c);
+			}
+			conexao.close();
+			comandoSQL.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return listaContatos;
+	}
+
+
+
+	public ArrayList<Contato> buscarPorTipoContato(String tipo){
+
+		ArrayList<Contato> listaContatos = new ArrayList<Contato>();
+		conexao = GerenciadorBd.obterConexao();
+		PreparedStatement comandoSQL = null;
+		try {
+			comandoSQL = conexao.prepareStatement("select * from contato where tipo = ? order by nome_contato");
+			comandoSQL.setString(1, tipo);
+			ResultSet rs =  comandoSQL.executeQuery();
+			while (rs.next())
+			{
+				Contato c = new Contato();
+				c.setId(rs.getInt(1));
+				c.setNome(rs.getString(2));
+				c.setCelular(rs.getString(3));
+				c.setEmail(rs.getString(4));
+				tipo =(rs.getString(5).toString());
+				if (tipo.equals("FAMILIA"))
+					c.setTipo(TipoContatoEnum.FAMILIA);
+				else if (tipo.equals("AMIGOS"))
+					c.setTipo(TipoContatoEnum.AMIGOS);
+				else if (tipo.equals("TRABALHO"))
+					c.setTipo(TipoContatoEnum.TRABALHO);
+				else if (tipo.equals("COMERCIAL"))
+					c.setTipo(TipoContatoEnum.COMERCIAL);
+				else 
+					c.setTipo(TipoContatoEnum.COLEGA);
+				listaContatos.add(c);
+			}
+			conexao.close();
+			comandoSQL.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return listaContatos;
+	}
+
+}

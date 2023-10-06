@@ -1,0 +1,73 @@
+package br.com.fiap.resource;
+
+
+
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+
+import br.com.fiap.bo.ContatoBO;
+import br.com.fiap.entity.Contato;
+
+//Controller | Resource
+@Path("/contatos")
+public class ContatoResource {
+	
+	private ContatoBO contatoBo;
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<Contato> buscar() {
+		contatoBo = new ContatoBO();
+		return contatoBo.buscarContatos();
+	}
+
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Contato buscarPorId(@PathParam("id") int codigo) {
+		contatoBo = new ContatoBO();
+		return contatoBo.buscarPorId(codigo);
+	}
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response cadastrar(Contato contato, @Context UriInfo uriInfo) {
+		contatoBo = new ContatoBO();
+		contatoBo.inserir(contato);
+		UriBuilder builder = uriInfo.getAbsolutePathBuilder();
+		builder.path(Integer.toString((contato.getId())));
+		return Response.created(builder.build()).build();
+	}
+	@PUT
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response alterar(Contato contato, @PathParam("id") int id) {
+		contatoBo = new ContatoBO();
+		contato.setId(id);
+		contatoBo.alterar(contato);
+		return Response.ok().build();
+	}
+	
+	@DELETE
+	@Path("/{id}")
+	public void excluir(@PathParam("id") int id) {
+	    contatoBo = new ContatoBO();
+	    contatoBo.excluir(id);    
+	}
+
+	}
+	
+}

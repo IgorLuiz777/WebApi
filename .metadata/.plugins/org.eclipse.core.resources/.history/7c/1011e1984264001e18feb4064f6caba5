@@ -1,0 +1,182 @@
+package br.com.fiap.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import br.com.fiap.entity.Contato;
+import br.com.fiap.enums.TipoContatoEnum;
+
+public class ContatoDao {
+    
+    private Connection conexao;
+
+    public ContatoDao() {
+        conexao = GerenciadorBd.obterConexao();
+    }
+
+    public void inserir(Contato contato) {
+        PreparedStatement comandoSQL = null;
+        try {
+            comandoSQL = conexao.prepareStatement("INSERT INTO contato (nome_contato, celular_contato, email_contato, tipo) VALUES (?, ?, ?, ?)");
+            comandoSQL.setString(1, contato.getNome());
+            comandoSQL.setString(2, contato.getCelular());
+            comandoSQL.setString(3, contato.getEmail());
+            comandoSQL.setString(4, contato.getTipo().toString());
+
+            comandoSQL.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL);
+        }
+    }
+
+    public void alterar(Contato contato) {
+        PreparedStatement comandoSQL = null;
+        try {
+            comandoSQL = conexao.prepareStatement("UPDATE contato SET nome_contato = ?, celular_contato = ?, email_contato = ?, tipo = ? WHERE id_contato = ?");
+            comandoSQL.setString(1, contato.getNome());
+            comandoSQL.setString(2, contato.getCelular());
+            comandoSQL.setString(3, contato.getEmail());
+            comandoSQL.setString(4, contato.getTipo().toString());
+            comandoSQL.setInt(5, contato.getId());
+
+            comandoSQL.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL);
+        }
+    }
+
+    public void remover(int id) {
+        PreparedStatement comandoSQL = null;
+        try {
+            comandoSQL = conexao.prepareStatement("DELETE FROM contato WHERE id_contato = ?");
+            comandoSQL.setInt(1, id);
+            comandoSQL.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL);
+        }
+    }
+
+    public Contato buscarPorId(int id) {
+        PreparedStatement comandoSQL = null;
+        ResultSet rs = null;
+        Contato c = null;
+        try {
+            comandoSQL = conexao.prepareStatement("SELECT * FROM contato WHERE id_contato = ?");
+            comandoSQL.setInt(1, id);
+            rs = comandoSQL.executeQuery();
+
+            if (rs.next()) {
+                c = criarContatoAPartirDoResultSet(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL, rs);
+        }
+        return c;
+    }
+
+    public List<Contato> buscarTodosContatos() {
+        List<Contato> listaContatos = new ArrayList<>();
+        PreparedStatement comandoSQL = null;
+        ResultSet rs = null;
+        try {
+            comandoSQL = conexao.prepareStatement("SELECT * FROM contato ORDER BY nome_contato");
+            rs = comandoSQL.executeQuery();
+
+            while (rs.next()) {
+                Contato c = criarContatoAPartirDoResultSet(rs);
+                listaContatos.add(c);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL, rs);
+        }
+        return listaContatos;
+    }
+
+    public List<Contato> buscarPorTipoContato(String tipo) {
+        List<Contato> listaContatos = new ArrayList<>();
+        PreparedStatement comandoSQL = null;
+        ResultSet rs = null;
+        try {
+            comandoSQL = conexao.prepareStatement("SELECT * FROM contato WHERE tipo = ? ORDER BY nome_contato");
+            comandoSQL.setString(1, tipo);
+            rs = comandoSQL.executeQuery();
+
+            while (rs.next()) {
+                Contato c = criarContatoAPartirDoResultSet(rs);
+                listaContatos.add(c);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            fecharRecursos(comandoSQL, rs);
+        }
+        return listaContatos;
+    }
+
+    private Contato criarContatoAPartirDoResultSet(ResultSet rs) throws SQLException {
+        Contato c = new Contato();
+        c.setId(rs.getInt("id_contato"));
+        c.setNome(rs.getString("nome_contato"));
+        c.setCelular(rs.getString("celular_contato"));
+        c.setEmail(rs.getString("email_contato"));
+
+        String tipo = rs.getString("tipo");
+        if (tipo.equals("FAMILIA"))
+            c.setTipo(TipoContatoEnum.FAMILIA);
+        else if (tipo.equals("AMIGOS"))
+            c.setTipo(TipoContatoEnum.AMIGOS);
+        else if (tipo.equals("TRABALHO"))
+            c.setTipo(TipoContatoEnum.TRABALHO);
+        else if (tipo.equals("COMERCIAL"))
+            c.setTipo(TipoContatoEnum.COMERCIAL);
+        else
+            c.setTipo(TipoContatoEnum.COLEGA);
+
+        return c;
+    }
+
+    private void fecharRecursos(PreparedStatement ps, ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        fecharRecursos(ps);
+    }
+
+    private void fecharRecursos(PreparedStatement ps) {
+        if (ps != null) {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void fecharConexao() {
+        if (conexao != null) {
+            try {
+                conexao.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
